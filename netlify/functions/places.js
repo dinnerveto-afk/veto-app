@@ -1,6 +1,3 @@
-
-Copy
-
 const https = require("https");
  
 exports.handler = async function (event) {
