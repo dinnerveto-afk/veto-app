@@ -377,7 +377,9 @@ async function fetchRestaurants(lat, lng) {
   try {
     const res = await fetch(`/.netlify/functions/places?lat=${lat}&lng=${lng}&cuisines=${encodeURIComponent(cuisines)}`);
     const text = await res.text();
+    console.log('RAW RESPONSE:', text.slice(0, 200));
     const data = JSON.parse(text);
+    console.log('STATUS:', data.status, 'RESULTS:', data.results?.length);
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       return data.results.slice(0, 15).map(r => ({
         name: r.name,
