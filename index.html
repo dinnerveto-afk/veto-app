@@ -458,8 +458,8 @@ async function startSwiping() {
   });
   renderGroupAvatarBar();
   showScreen('swiping');
+  showLoadingCard();
   if (restaurants.length === 0) {
-    showLoadingCard();
     try {
       const pos = await getUserLocation();
       restaurants = await fetchRestaurants(pos.lat, pos.lng);
