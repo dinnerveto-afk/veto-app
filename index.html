@@ -376,20 +376,21 @@ async function fetchRestaurants(lat, lng) {
   const cuisines = [...selectedCuisines].join(',');
   try {
     const res = await fetch(`/.netlify/functions/places?lat=${lat}&lng=${lng}&cuisines=${encodeURIComponent(cuisines)}`);
+    if (!res.ok) throw new Error('Bad response');
     const data = await res.json();
-    if (data.results && data.results.length > 0) {
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
       return data.results.slice(0, 15).map(r => ({
         name: r.name,
         rating: r.rating?.toFixed(1) || 'N/A',
         price: '$'.repeat(r.price_level || 2),
         address: r.vicinity,
-        photo: r.photos?.[0] ? getPhotoUrl(r.photos[0].photo_reference) : null,
+        photo: r.photos?.[0] ? `/.netlify/functions/places?photo=${r.photos[0].photo_reference}` : null,
         placeId: r.place_id,
         emoji: guessEmoji(r.types || [], r.name),
       }));
     }
   } catch (e) {
-    console.warn('Places fetch failed, using mock data:', e);
+    console.warn('Places fetch failed:', e);
   }
   return getMockRestaurants();
 }
