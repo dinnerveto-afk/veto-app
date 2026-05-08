@@ -1,7 +1,7 @@
 exports.handler = async function(event) {
   const { lat, lng, cuisines } = event.queryStringParameters;
 
-  const GOOGLE_API_KEY = AIzaSyBgG_-lz40ijWGWUQ92uiyORPKWBlgZq0o;
+  const GOOGLE_API_KEY = "AIzaSyBgG_-lz40ijWGWUQ92uiyORPKWBlgZq0o";
 
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=3000&type=restaurant&keyword=${encodeURIComponent(cuisines || '')}&key=${GOOGLE_API_KEY}`;
 
