@@ -426,12 +426,22 @@ function setupAutocomplete() {
       predictions.slice(0,4).forEach(p=>{
         const item=document.createElement('div'); item.className='suggestion-item';
         item.innerHTML=`<span>📍</span><div><div class="suggestion-main">${p.structured_formatting.main_text}</div><div class="suggestion-sub">${p.structured_formatting.secondary_text||''}</div></div>`;
-        item.onclick=()=>{
-          input.value=p.description; sugg.style.display='none';
-          new google.maps.Geocoder().geocode({placeId:p.place_id},(res,st)=>{
-            if (st==='OK'&&res[0]){const loc=res[0].geometry.location;searchedLocation={lat:loc.lat(),lng:loc.lng(),name:p.description};}
-          });
-        };
+item.onclick = () => {
+  input.value = p.description;
+  sugg.style.display = 'none';
+  // Show loading state on button
+  const createBtn = document.querySelector('#setup .btn-primary');
+  createBtn.textContent = 'Finding location...';
+  createBtn.disabled = true;
+  new google.maps.Geocoder().geocode({ placeId: p.place_id }, (res, st) => {
+    if (st === 'OK' && res[0]) {
+      const loc = res[0].geometry.location;
+      searchedLocation = { lat: loc.lat(), lng: loc.lng(), name: p.description };
+    }
+    createBtn.textContent = 'Create & get link';
+    createBtn.disabled = false;
+  });
+};
         sugg.appendChild(item);
       });
       sugg.style.display='block';
