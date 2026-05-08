@@ -461,11 +461,13 @@ async function startSwiping() {
   renderGroupAvatarBar();
   showScreen('swiping');
   showLoadingCard();
+console.log('starting location fetch...');
   if (restaurants.length === 0) {
-    try {
-      const pos = await getUserLocation();
-      restaurants = await fetchRestaurants(pos.lat, pos.lng);
-    } catch (e) {
+try {
+  const pos = await getUserLocation();
+  console.log('got location:', pos);
+  restaurants = await fetchRestaurants(pos.lat, pos.lng);
+} catch (e) {
       restaurants = getMockRestaurants();
     }
   }
