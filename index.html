@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veto</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0e0e0e;
+    --white: #f5f2ee;
+    --red: #e03b2f;
+    --red-dark: #b52e24;
+    --red-light: #fdecea;
+    --gray: #8a8780;
+    --gray-light: #e8e5e0;
+    --surface: #f0ede8;
+    --card-bg: #ffffff;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--surface); font-family: var(--font-body); color: var(--black); overscroll-behavior: none; }
+  #app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding: 0 20px; }
+
+  .screen { display: none; flex-direction: column; flex: 1; padding: 32px 0 40px; }
+  .screen.active { display: flex; }
+
+  .wordmark { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--black); }
+  .wordmark span { color: var(--red); }
+
+  .btn { display: block; width: 100%; padding: 15px 20px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; text-align: center; border: none; }
+  .btn-primary { background: var(--black); color: var(--white); }
+  .btn-primary:hover { background: #222; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-ghost { background: transparent; color: var(--black); border: 1.5px solid var(--gray-light); margin-top: 10px; }
+  .btn-ghost:hover { border-color: var(--gray); }
+
+  #home { justify-content: space-between; }
+  .home-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .home-tagline { font-family: var(--font-display); font-size: 42px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; margin: 16px 0 12px; }
+  .home-tagline em { font-style: normal; color: var(--red); }
+  .home-sub { font-size: 15px; color: var(--gray); line-height: 1.6; max-width: 300px; }
+  .home-actions { padding-bottom: 8px; }
+
+  .setup-label { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 10px; }
+  .filter-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .filter-pill { padding: 8px 16px; border-radius: 30px; border: 1.5px solid var(--gray-light); background: var(--card-bg); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--black); font-family: var(--font-body); transition: all 0.12s; }
+  .filter-pill.active { background: var(--black); color: var(--white); border-color: var(--black); }
+  .filter-pill:hover:not(.active) { border-color: var(--gray); }
+
+  .link-card { background: var(--card-bg); border-radius: var(--radius); padding: 18px; margin-bottom: 24px; border: 1.5px solid var(--gray-light); }
+  .link-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: var(--radius-sm); padding: 10px 14px; }
+  .link-text { flex: 1; font-size: 12px; color: var(--gray); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .copy-btn { font-size: 13px; font-weight: 500; color: var(--black); background: none; border: none; cursor: pointer; padding: 2px 6px; font-family: var(--font-body); white-space: nowrap; }
+  .share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .share-btn { padding: 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--gray-light); background: var(--card-bg); font-size: 13px; cursor: pointer; font-family: var(--font-body); color: var(--black); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; transition: border-color 0.12s; }
+  .share-btn:hover { border-color: var(--gray); }
+
+  .members-card { background: var(--card-bg); border-radius: var(--radius); padding: 16px 18px; border: 1.5px solid var(--gray-light); margin-bottom: 20px; }
+  .member-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; font-family: var(--font-display); }
+  .member-name { font-size: 14px; font-weight: 500; }
+  .host-badge { margin-left: auto; font-size: 11px; background: var(--red-light); color: var(--red); padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .add-btn { display: flex; align-items: center; gap: 8px; padding: 7px 0; background: none; border: none; cursor: pointer; font-size: 14px; color: var(--gray); font-family: var(--font-body); width: 100%; border-top: 1.5px solid var(--gray-light); margin-top: 4px; padding-top: 12px; }
+  .add-btn:hover { color: var(--black); }
+  .waiting-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray); margin-bottom: 16px; }
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 1.5s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.25} }
+
+  #swiping { padding-top: 16px; }
+  .swipe-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .swipe-counter { font-size: 13px; color: var(--gray); font-weight: 500; }
+  .group-avatars { display: flex; align-items: center; }
+  .mini-av { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; border: 2px solid var(--surface); margin-left: -6px; font-family: var(--font-display); }
+  .mini-av:first-child { margin-left: 0; }
+  .progress-track { height: 3px; background: var(--gray-light); border-radius: 2px; margin-bottom: 16px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--black); border-radius: 2px; transition: width 0.3s ease; }
+
+  .card-stack { position: relative; height: 420px; margin-bottom: 20px; user-select: none; }
+  .restaurant-card { position: absolute; width: 100%; height: 100%; background: var(--card-bg); border-radius: 20px; overflow: hidden; cursor: grab; border: 1.5px solid var(--gray-light); }
+  .restaurant-card:active { cursor: grabbing; }
+  .card-photo { width: 100%; height: 240px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 72px; position: relative; overflow: hidden; }
+  .card-photo img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+  .card-photo-placeholder { font-size: 72px; z-index: 1; }
+  .card-body { padding: 18px 20px; }
+  .card-name { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .card-meta { font-size: 13px; color: var(--gray); margin-bottom: 12px; }
+  .card-tag { font-size: 12px; padding: 4px 12px; border-radius: 20px; background: var(--surface); color: var(--black); font-weight: 500; display: inline-block; margin: 2px 4px 2px 0; }
+
+  .vote-stamp { position: absolute; top: 32px; padding: 8px 18px; border-radius: 8px; font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 1px; opacity: 0; pointer-events: none; transition: opacity 0.12s; z-index: 20; }
+  .stamp-yes { left: 20px; color: #22c55e; border: 3px solid #22c55e; transform: rotate(-12deg); }
+  .stamp-no { right: 20px; color: var(--red); border: 3px solid var(--red); transform: rotate(12deg); }
+
+  .swipe-actions { display: flex; justify-content: center; align-items: center; gap: 20px; }
+  .action-btn { width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid var(--gray-light); background: var(--card-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 26px; }
+  .action-btn:active { transform: scale(0.88); }
+  .action-btn.no:hover { border-color: var(--red); background: var(--red-light); }
+  .action-btn.yes:hover { border-color: #22c55e; background: #f0fdf4; }
+  .action-btn.yes { width: 72px; height: 72px; font-size: 30px; }
+  .swipe-hint { text-align: center; font-size: 12px; color: var(--gray); margin-top: 10px; }
+
+  #joined { justify-content: center; text-align: center; }
+
+  .results-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+  .result-item { display: flex; align-items: center; gap: 14px; background: var(--card-bg); border-radius: var(--radius); padding: 14px 16px; border: 1.5px solid var(--gray-light); }
+  .result-photo { width: 52px; height: 52px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; overflow: hidden; }
+  .result-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .result-info .name { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+  .result-info .meta { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .voter-stack { display: flex; margin-left: auto; }
+
+  #no-match { justify-content: center; text-align: center; }
+  .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-sub { font-size: 14px; color: var(--gray); line-height: 1.5; margin-bottom: 24px; }
+
+  .loading-card { background: var(--card-bg); border-radius: 20px; height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; border: 1.5px solid var(--gray-light); }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--gray-light); border-top-color: var(--black); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--gray); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="home" class="screen active">
+    <div style="padding-top: 8px;"><span class="wordmark">Ve<span>to</span></span></div>
+    <div class="home-hero">
+      <div class="home-tagline">Swipe. <em>Veto.</em><br>Eat together.</div>
+      <p class="home-sub">The group decides — a restaurant only wins if nobody vetoes it.</p>
+    </div>
+    <div class="home-actions">
+      <button class="btn btn-primary" onclick="showScreen('setup')">Create a session</button>
+      <button class="btn btn-ghost" onclick="showScreen('join-screen')">I have a link</button>
+    </div>
+  </div>
+
+  <div id="setup" class="screen">
+    <div class="wordmark" style="margin-bottom: 28px;">Ve<span style="color:var(--red)">to</span></div>
+    <div class="page-title">What are you feeling?</div>
+    <p class="page-sub">Pick cuisines to include in your session.</p>
+    <div class="setup-label">Cuisine</div>
+    <div class="filter-grid" id="filter-grid"></div>
+    <div style="margin-top: auto;">
+      <button class="btn btn-primary" onclick="createSession()">Create &amp; get link</button>
+      <button class="btn btn-ghost" onclick="showScreen('home')">Back</button>
+    </div>
+  </div>
+
+  <div id="lobby" class="screen">
+    <div class="wordmark" style="margin-bottom: 28px;">Ve<span style="color:var(--red)">to</span></div>
+    <div class="page-title">Invite your group</div>
+    <p class="page-sub">Share the link — a place only matches if <strong>everyone</strong> says yes.</p>
+    <div class="link-card">
+      <div class="link-row">
+        <span class="link-text" id="share-link-text"></span>
+        <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy</button>
+      </div>
+      <div class="share-grid">
+        <button class="share-btn" onclick="shareVia('messages')">💬 Messages</button>
+        <button class="share-btn" onclick="shareVia('whatsapp')">📱 WhatsApp</button>
+        <button class="share-btn" onclick="shareVia('email')">✉️ Email</button>
+        <button class="share-btn" onclick="shareVia('native')">↑ More</button>
+      </div>
+    </div>
+    <div class="setup-label">Group members</div>
+    <div class="members-card">
+      <div id="members-list"></div>
+      <button class="add-btn" onclick="addSimMember()">+ Simulate someone joining</button>
+    </div>
+    <div class="waiting-row"><span class="pulse-dot"></span> Waiting for your group...</div>
+    <button class="btn btn-primary" onclick="startSwiping()">Start swiping</button>
+    <button class="btn btn-ghost" onclick="showScreen('home')">Cancel</button>
+  </div>
+
+  <div id="join-screen" class="screen">
+    <div class="wordmark" style="margin-bottom: 28px;">Ve<span style="color:var(--red)">to</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      <div style="font-size:60px;margin-bottom:20px;">🍽️</div>
+      <div class="page-title">You're in!</div>
+      <p class="page-sub">Your group is deciding where to eat. Swipe through restaurants — a place only wins if everyone agrees.</p>
+    </div>
+    <button class="btn btn-primary" onclick="joinAndSwipe()">Start swiping</button>
+  </div>
+
+  <div id="swiping" class="screen">
+    <div class="swipe-header">
+      <span class="wordmark" style="font-size:20px;">Ve<span style="color:var(--red)">to</span></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="group-avatars" id="group-avatars-bar"></div>
+        <span class="swipe-counter" id="swipe-count"></span>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+    <div class="card-stack" id="card-stack"></div>
+    <div class="swipe-actions">
+      <button class="action-btn no" onclick="swipe('no')">✕</button>
+      <button class="action-btn yes" onclick="swipe('yes')">♥</button>
+    </div>
+    <p class="swipe-hint">Drag left to veto · drag right to keep</p>
+  </div>
+
+  <div id="results" class="screen">
+    <div class="wordmark" style="margin-bottom: 24px;">Ve<span style="color:var(--red)">to</span></div>
+    <div class="page-title">Everyone agrees! 🎉</div>
+    <p class="page-sub" id="results-sub"></p>
+    <div class="results-list" id="results-list"></div>
+    <div style="margin-top: auto;">
+      <button class="btn btn-primary" onclick="showScreen('home')">Start over</button>
+    </div>
+  </div>
+
+  <div id="no-match" class="screen">
+    <div class="wordmark" style="margin-bottom: 24px;">Ve<span style="color:var(--red)">to</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      <div style="font-size:60px;margin-bottom:20px;">😬</div>
+      <div class="page-title">No consensus</div>
+      <p class="page-sub">Your group couldn't agree this time. Try widening the cuisine filters or adding more restaurants.</p>
+    </div>
+    <button class="btn btn-primary" onclick="showScreen('home')">Try again</button>
+  </div>
+
+</div>
+
+<!-- =====================================================
+     FIREBASE CONFIG — replace with your values
+     ===================================================== -->
+<script>
+  const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBU9BjsU6YPxDHQMGfqzOBpKJMw-gi9X3o",
+  authDomain: "veto-7befa.firebaseapp.com",
+  databaseURL: "https://veto-7befa-default-rtdb.firebaseio.com",
+  projectId: "veto-7befa",
+  storageBucket: "veto-7befa.firebasestorage.app",
+  messagingSenderId: "1002021929509",
+  appId: "1:1002021929509:web:b61ae697822729716f75cc"
+  };
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+const CUISINES = ['American','Chinese','Indian','Italian','Japanese','Korean','Mediterranean','Mexican','Thai','Vietnamese'];
+const AVATAR_COLORS = [
+  ['#fdecea','#b52e24'],['#fef3c7','#92400e'],['#d1fae5','#065f46'],
+  ['#dbeafe','#1e40af'],['#ede9fe','#5b21b6'],['#fce7f3','#9d174d'],
+];
+const SIM_NAMES = ['Alex','Jordan','Sam','Riley','Morgan','Casey','Drew','Quinn'];
+const CUISINE_EMOJIS = {
+  'American':'🍔','Chinese':'🥡','Indian':'🍛','Italian':'🍝',
+  'Japanese':'🍣','Korean':'🥩','Mediterranean':'🥙','Mexican':'🌮',
+  'Thai':'🌶️','Vietnamese':'🍜'
+};
+
+let sessionId = '';
+let members = [];
+let myVotes = {};
+let partnerVotes = {};
+let currentIdx = 0;
+let restaurants = [];
+let selectedCuisines = new Set(CUISINES);
+let isDragging = false, startX = 0, currentX = 0, activeCard = null;
+let myMemberId = 'host';
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function buildFilterGrid() {
+  const grid = document.getElementById('filter-grid');
+  grid.innerHTML = '';
+  const allPill = makePill('All', selectedCuisines.size === CUISINES.length, () => {
+    selectedCuisines = new Set(CUISINES); buildFilterGrid();
+  });
+  grid.appendChild(allPill);
+  CUISINES.forEach(c => {
+    const p = makePill((CUISINE_EMOJIS[c] || '') + ' ' + c, selectedCuisines.has(c), () => {
+      if (selectedCuisines.has(c)) selectedCuisines.delete(c); else selectedCuisines.add(c);
+      if (selectedCuisines.size === 0) selectedCuisines = new Set(CUISINES);
+      buildFilterGrid();
+    });
+    grid.appendChild(p);
+  });
+}
+
+function makePill(label, active, onclick) {
+  const btn = document.createElement('button');
+  btn.className = 'filter-pill' + (active ? ' active' : '');
+  btn.textContent = label;
+  btn.onclick = onclick;
+  return btn;
+}
+
+function generateId() { return Math.random().toString(36).slice(2, 10); }
+function buildLink(id) { return `${location.origin}${location.pathname}?session=${id}`; }
+
+async function createSession() {
+  sessionId = generateId();
+  myMemberId = 'host';
+  members = [{ id: 'host', name: 'You', initials: 'Me', colorIdx: 0 }];
+  document.getElementById('share-link-text').textContent = buildLink(sessionId);
+  renderMembers();
+  await db.ref(`sessions/${sessionId}`).set({
+    cuisines: [...selectedCuisines],
+    members: { host: { name: 'You', colorIdx: 0 } },
+    votes: {},
+    createdAt: Date.now()
+  });
+  listenForMembers();
+  showScreen('lobby');
+}
+
+function listenForMembers() {
+  db.ref(`sessions/${sessionId}/members`).on('value', snap => {
+    const data = snap.val() || {};
+    members = Object.entries(data).map(([id, m], i) => ({
+      id, name: m.name, initials: m.name.slice(0,2).toUpperCase(), colorIdx: m.colorIdx ?? i
+    }));
+    renderMembers();
+  });
+}
+
+function addSimMember() {
+  const usedNames = members.map(m => m.name);
+  const available = SIM_NAMES.filter(n => !usedNames.includes(n));
+  if (!available.length) return;
+  const name = available[Math.floor(Math.random() * available.length)];
+  const colorIdx = members.length % AVATAR_COLORS.length;
+  db.ref(`sessions/${sessionId}/members/${generateId()}`).set({ name, colorIdx });
+}
+
+function renderMembers() {
+  const list = document.getElementById('members-list');
+  list.innerHTML = '';
+  members.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = avatarHTML(m, 34) +
+      `<span class="member-name">${m.name}</span>` +
+      (i === 0 ? '<span class="host-badge">host</span>' : '');
+    list.appendChild(row);
+  });
+}
+
+function avatarHTML(m, size) {
+  const [bg, color] = AVATAR_COLORS[m.colorIdx % AVATAR_COLORS.length];
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${bg};color:${color};font-size:${Math.round(size*0.35)}px;">${m.initials}</div>`;
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(buildLink(sessionId)).catch(() => {});
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+function shareVia(platform) {
+  const link = buildLink(sessionId);
+  const msg = encodeURIComponent(`Let's Veto dinner — pick a restaurant together: ${link}`);
+  if (platform === 'whatsapp') window.open(`https://wa.me/?text=${msg}`);
+  else if (platform === 'email') window.open(`mailto:?subject=Let's Veto dinner&body=${msg}`);
+  else if (platform === 'messages') window.open(`sms:?body=${msg}`);
+  else if (platform === 'native' && navigator.share) navigator.share({ title:"Let's Veto dinner", url: link }).catch(() => {});
+  else copyLink();
+}
+
+// ── Restaurants via Netlify proxy ──────────────────────
+async function fetchRestaurants(lat, lng) {
+  const cuisines = [...selectedCuisines].join(',');
+  try {
+    const res = await fetch(`/.netlify/functions/places?lat=${lat}&lng=${lng}&cuisines=${encodeURIComponent(cuisines)}`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      return data.results.slice(0, 15).map(r => ({
+        name: r.name,
+        rating: r.rating?.toFixed(1) || 'N/A',
+        price: '$'.repeat(r.price_level || 2),
+        address: r.vicinity,
+        photo: r.photos?.[0] ? getPhotoUrl(r.photos[0].photo_reference) : null,
+        placeId: r.place_id,
+        emoji: guessEmoji(r.types || [], r.name),
+      }));
+    }
+  } catch (e) {
+    console.warn('Places fetch failed, using mock data:', e);
+  }
+  return getMockRestaurants();
+}
+
+function getPhotoUrl(ref) {
+  return `/.netlify/functions/places?photo=${ref}`;
+}
+
+function guessEmoji(types, name) {
+  const n = name.toLowerCase();
+  if (n.includes('sushi') || n.includes('japanese')) return '🍣';
+  if (n.includes('pizza') || n.includes('italian')) return '🍕';
+  if (n.includes('taco') || n.includes('mexican')) return '🌮';
+  if (n.includes('burger') || n.includes('american')) return '🍔';
+  if (n.includes('pho') || n.includes('vietnamese')) return '🍜';
+  if (n.includes('indian') || n.includes('curry')) return '🍛';
+  if (n.includes('thai')) return '🌶️';
+  if (n.includes('korean') || n.includes('bbq')) return '🥩';
+  if (types.includes('chinese_restaurant')) return '🥡';
+  return '🍽️';
+}
+
+function getMockRestaurants() {
+  return [
+    { name:'Umi Sushi', rating:'4.7', price:'$$', address:'123 Main St', photo:null, emoji:'🍣' },
+    { name:'Bella Napoli', rating:'4.5', price:'$$', address:'456 Oak Ave', photo:null, emoji:'🍕' },
+    { name:'Spice Garden', rating:'4.6', price:'$', address:'789 Elm Rd', photo:null, emoji:'🍛' },
+    { name:'El Taquero', rating:'4.4', price:'$', address:'321 Pine St', photo:null, emoji:'🌮' },
+    { name:'The Burger Lab', rating:'4.3', price:'$$', address:'654 Maple Dr', photo:null, emoji:'🍔' },
+    { name:'Pho Saigon', rating:'4.8', price:'$', address:'987 Cedar Ln', photo:null, emoji:'🍜' },
+    { name:'Mezze House', rating:'4.5', price:'$$', address:'147 Birch Blvd', photo:null, emoji:'🥙' },
+    { name:'Seoul Kitchen', rating:'4.7', price:'$$$', address:'258 Walnut Way', photo:null, emoji:'🥩' },
+  ];
+}
+
+function renderGroupAvatarBar() {
+  const bar = document.getElementById('group-avatars-bar');
+  bar.innerHTML = members.map(m => {
+    const [bg, color] = AVATAR_COLORS[m.colorIdx % AVATAR_COLORS.length];
+    return `<div class="mini-av" style="background:${bg};color:${color};">${m.initials}</div>`;
+  }).join('');
+}
+
+function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error('No geolocation')); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => reject(new Error('Location denied'))
+    );
+  });
+}
+
+function showLoadingCard() {
+  document.getElementById('card-stack').innerHTML =
+    `<div class="loading-card"><div class="spinner"></div><div class="loading-text">Finding restaurants near you...</div></div>`;
+}
+
+async function startSwiping() {
+  currentIdx = 0; myVotes = {}; partnerVotes = {};
+  members.forEach((m, mi) => {
+    if (mi === 0) return;
+    partnerVotes[m.id] = {};
+    getMockRestaurants().forEach((_, i) => { partnerVotes[m.id][i] = Math.random() > 0.45 ? 'yes' : 'no'; });
+  });
+  renderGroupAvatarBar();
+  showScreen('swiping');
+  if (restaurants.length === 0) {
+    showLoadingCard();
+    try {
+      const pos = await getUserLocation();
+      restaurants = await fetchRestaurants(pos.lat, pos.lng);
+    } catch (e) {
+      restaurants = getMockRestaurants();
+    }
+  }
+  renderCard();
+}
+
+async function joinAndSwipe() {
+  members = [
+    { id: 'friend1', name: 'Friend 1', initials: 'F1', colorIdx: 0 },
+    { id: 'you', name: 'You', initials: 'Me', colorIdx: 1 },
+  ];
+  restaurants = [];
+  await startSwiping();
+}
+
+function renderCard() {
+  const stack = document.getElementById('card-stack');
+  stack.querySelectorAll('.restaurant-card, .vote-stamp').forEach(c => c.remove());
+
+  const stampYes = document.createElement('div');
+  stampYes.className = 'vote-stamp stamp-yes'; stampYes.textContent = 'KEEP';
+  const stampNo = document.createElement('div');
+  stampNo.className = 'vote-stamp stamp-no'; stampNo.textContent = 'VETO';
+  stack.appendChild(stampYes);
+  stack.appendChild(stampNo);
+
+  for (let i = Math.min(currentIdx + 2, restaurants.length - 1); i >= currentIdx; i--) {
+    if (i >= restaurants.length) continue;
+    const r = restaurants[i];
+    const card = document.createElement('div');
+    card.className = 'restaurant-card';
+    card.dataset.idx = i;
+    const offset = (i - currentIdx) * 7;
+    card.style.transform = `translateY(-${offset}px) scale(${1 - offset * 0.003})`;
+    card.style.zIndex = 10 - (i - currentIdx);
+    const photoHTML = r.photo
+      ? `<img src="${r.photo}" alt="${r.name}" onerror="this.style.display='none'"><span class="card-photo-placeholder" style="position:absolute;">${r.emoji}</span>`
+      : `<span class="card-photo-placeholder">${r.emoji}</span>`;
+    card.innerHTML = `
+      <div class="card-photo">${photoHTML}</div>
+      <div class="card-body">
+        <div class="card-name">${r.name}</div>
+        <div class="card-meta">${r.rating}★ · ${r.price}${r.address ? ' · ' + r.address : ''}</div>
+      </div>`;
+    if (i === currentIdx) {
+      card.addEventListener('mousedown', dragStart);
+      card.addEventListener('touchstart', dragStart, { passive: true });
+    }
+    stack.appendChild(card);
+  }
+  updateProgress();
+}
+
+function dragStart(e) {
+  isDragging = true; activeCard = e.currentTarget;
+  startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('mouseup', dragEnd);
+  document.addEventListener('touchmove', dragMove, { passive: true });
+  document.addEventListener('touchend', dragEnd);
+}
+
+function dragMove(e) {
+  if (!isDragging) return;
+  currentX = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - startX;
+  activeCard.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.04}deg)`;
+  const stampYes = document.querySelector('.stamp-yes');
+  const stampNo = document.querySelector('.stamp-no');
+  if (currentX > 40) { stampYes.style.opacity = Math.min((currentX-40)/80,1); stampNo.style.opacity=0; }
+  else if (currentX < -40) { stampNo.style.opacity = Math.min((-currentX-40)/80,1); stampYes.style.opacity=0; }
+  else { stampYes.style.opacity=0; stampNo.style.opacity=0; }
+}
+
+function dragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  document.removeEventListener('mousemove', dragMove);
+  document.removeEventListener('mouseup', dragEnd);
+  document.removeEventListener('touchmove', dragMove);
+  document.removeEventListener('touchend', dragEnd);
+  document.querySelectorAll('.vote-stamp').forEach(s => s.style.opacity = 0);
+  if (currentX > 80) swipe('yes');
+  else if (currentX < -80) swipe('no');
+  else if (activeCard) activeCard.style.transform = '';
+  currentX = 0;
+}
+
+function swipe(vote) {
+  myVotes[currentIdx] = vote;
+  if (sessionId) db.ref(`sessions/${sessionId}/votes/${myMemberId}/${currentIdx}`).set(vote);
+  const card = document.querySelector(`.restaurant-card[data-idx="${currentIdx}"]`);
+  if (card) {
+    card.style.transition = 'transform 0.35s ease, opacity 0.35s';
+    card.style.transform = vote === 'yes' ? 'translateX(130%) rotate(20deg)' : 'translateX(-130%) rotate(-20deg)';
+    card.style.opacity = '0';
+    setTimeout(() => card.remove(), 350);
+  }
+  currentIdx++;
+  if (currentIdx >= restaurants.length) setTimeout(showResults, 400);
+  else setTimeout(renderCard, 200);
+}
+
+function updateProgress() {
+  document.getElementById('progress').style.width = Math.round((currentIdx / Math.max(restaurants.length,1)) * 100) + '%';
+  document.getElementById('swipe-count').textContent = `${Math.min(currentIdx+1, restaurants.length)} / ${restaurants.length}`;
+}
+
+function showResults() {
+  const matches = restaurants.filter((_, i) => {
+    if (myVotes[i] !== 'yes') return false;
+    return Object.values(partnerVotes).every(v => v[i] === 'yes');
+  });
+  if (!matches.length) { showScreen('no-match'); return; }
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+  matches.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'result-item';
+    const photoHTML = r.photo ? `<img src="${r.photo}" alt="${r.name}">` : `<span style="font-size:28px;">${r.emoji}</span>`;
+    const voterAvatars = members.map(m => {
+      const [bg, color] = AVATAR_COLORS[m.colorIdx % AVATAR_COLORS.length];
+      return `<div class="mini-av" style="background:${bg};color:${color};border:2px solid var(--surface);">${m.initials}</div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="result-photo">${photoHTML}</div>
+      <div class="result-info">
+        <div class="name">${r.name}</div>
+        <div class="meta">${r.rating}★ · ${r.price}${r.address ? ' · '+r.address : ''}</div>
+      </div>
+      <div class="voter-stack">${voterAvatars}</div>`;
+    list.appendChild(el);
+  });
+  document.getElementById('results-sub').textContent =
+    `${matches.length} place${matches.length>1?'s':''} got a yes from all ${members.length} of you.`;
+  showScreen('results');
+}
+
+function checkUrlSession() {
+  const params = new URLSearchParams(location.search);
+  const sid = params.get('session');
+  if (sid) { sessionId = sid; showScreen('join-screen'); }
+}
+
+buildFilterGrid();
+checkUrlSession();
+</script>
+</body>
+</html>
