@@ -6,7 +6,7 @@ exports.handler = async function (event) {
   const GOOGLE_API_KEY = "AIzaSyBgG_-lz40ijWGWUQ92uiyORPKWBlgZq0o";
  
   const query = encodeURIComponent(cuisines || "restaurant");
-  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=3000&type=restaurant&keyword=${query}&key=${GOOGLE_API_KEY}`;
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=restaurant&key=${GOOGLE_API_KEY}`;
  
   return new Promise((resolve) => {
     https.get(url, (res) => {
