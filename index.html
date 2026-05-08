@@ -376,15 +376,15 @@ async function fetchRestaurants(lat, lng) {
   const cuisines = [...selectedCuisines].join(',');
   try {
     const res = await fetch(`/.netlify/functions/places?lat=${lat}&lng=${lng}&cuisines=${encodeURIComponent(cuisines)}`);
-    if (!res.ok) throw new Error('Bad response');
-    const data = await res.json();
+    const text = await res.text();
+    const data = JSON.parse(text);
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       return data.results.slice(0, 15).map(r => ({
         name: r.name,
         rating: r.rating?.toFixed(1) || 'N/A',
         price: '$'.repeat(r.price_level || 2),
         address: r.vicinity,
-        photo: r.photos?.[0] ? `/.netlify/functions/places?photo=${r.photos[0].photo_reference}` : null,
+        photo: r.photos?.[0] ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${r.photos[0].photo_reference}&key=AIzaSyBgG_-lz40ijWGWUQ92uiyORPKWBlgZq0o` : null,
         placeId: r.place_id,
         emoji: guessEmoji(r.types || [], r.name),
       }));
