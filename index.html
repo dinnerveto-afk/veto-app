@@ -414,40 +414,46 @@ function setView(view) {
 
 // ── Location ───────────────────────────────────────────
 function setupAutocomplete() {
-  const input=document.getElementById('location-input'), sugg=document.getElementById('suggestions');
+  const input = document.getElementById('location-input');
+  const sugg = document.getElementById('suggestions');
   if (!window.google) return;
-  autocompleteService=new google.maps.places.AutocompleteService();
-  input.addEventListener('input',()=>{
-    const val=input.value.trim();
-    if (!val||val.length<2){sugg.style.display='none';return;}
-    autocompleteService.getPlacePredictions({input:val,types:['geocode']},(predictions,status)=>{
-      if (status!==google.maps.places.PlacesServiceStatus.OK||!predictions){sugg.style.display='none';return;}
-      sugg.innerHTML='';
-      predictions.slice(0,4).forEach(p=>{
-        const item=document.createElement('div'); item.className='suggestion-item';
-        item.innerHTML=`<span>📍</span><div><div class="suggestion-main">${p.structured_formatting.main_text}</div><div class="suggestion-sub">${p.structured_formatting.secondary_text||''}</div></div>`;
-item.onclick = () => {
-  input.value = p.description;
-  sugg.style.display = 'none';
-  // Show loading state on button
-  const createBtn = document.querySelector('#setup .btn-primary');
-  createBtn.textContent = 'Finding location...';
-  createBtn.disabled = true;
-  new google.maps.Geocoder().geocode({ placeId: p.place_id }, (res, st) => {
-    if (st === 'OK' && res[0]) {
-      const loc = res[0].geometry.location;
-      searchedLocation = { lat: loc.lat(), lng: loc.lng(), name: p.description };
-    }
-    createBtn.textContent = 'Create & get link';
-    createBtn.disabled = false;
-  });
-};
+
+  const placesService = new google.maps.places.PlacesService(document.createElement('div'));
+  autocompleteService = new google.maps.places.AutocompleteService();
+
+  input.addEventListener('input', () => {
+    const val = input.value.trim();
+    if (!val || val.length < 2) { sugg.style.display = 'none'; return; }
+    autocompleteService.getPlacePredictions({ input: val, types: ['geocode'] }, (predictions, status) => {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) { sugg.style.display = 'none'; return; }
+      sugg.innerHTML = '';
+      predictions.slice(0, 4).forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.innerHTML = `<span>📍</span><div><div class="suggestion-main">${p.structured_formatting.main_text}</div><div class="suggestion-sub">${p.structured_formatting.secondary_text || ''}</div></div>`;
+        item.onclick = () => {
+          input.value = p.description;
+          sugg.style.display = 'none';
+          placesService.getDetails({ placeId: p.place_id, fields: ['geometry', 'name', 'formatted_address'] }, (place, st) => {
+            if (st === google.maps.places.PlacesServiceStatus.OK && place.geometry) {
+              searchedLocation = {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                name: p.description
+              };
+              console.log('Location set:', searchedLocation);
+            }
+          });
+        };
         sugg.appendChild(item);
       });
-      sugg.style.display='block';
+      sugg.style.display = 'block';
     });
   });
-  document.addEventListener('click',e=>{if(!e.target.closest('#loc-wrap'))sugg.style.display='none';});
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#loc-wrap')) sugg.style.display = 'none';
+  });
 }
 
 function useMyLocation() {
@@ -465,7 +471,8 @@ function generateId() { return Math.random().toString(36).slice(2,10); }
 function buildLink(id) { return `${location.origin}${location.pathname}?session=${id}`; }
 
 async function createSession() {
-  if (!searchedLocation){alert('Please enter a location or tap "Use mine" first!');return;}
+  console.log('searchedLocation at create time:', searchedLocation);
+  if (!searchedLocation) { alert('Please enter a location or tap "Use mine" first!'); return; }
   sessionId=generateId(); myMemberId='host'; isHost=true;
   members=[{id:'host',name:'You (host)',initials:'Me',colorIdx:0}];
   document.getElementById('share-link-text').textContent=buildLink(sessionId);
